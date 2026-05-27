@@ -1,15 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
-
-const initialTransactions = [
-  { id: 1, name: 'Jollof & chicken', category: 'Food', amount: 1500, date: 'Today' },
-  { id: 2, name: 'Airtime recharge', category: 'Data', amount: 500, date: 'Today' },
-  { id: 3, name: 'Bus fare', category: 'Transport', amount: 300, date: 'Yesterday' },
-  { id: 4, name: 'Lecture notes', category: 'School', amount: 800, date: 'Yesterday' },
-]
 
 function getCategoryEmoji(category: string) {
   const map: Record<string, string> = {
@@ -19,27 +13,62 @@ function getCategoryEmoji(category: string) {
   return map[category] || '📦'
 }
 
+type Transaction = {
+  id: string
+  name: string
+  amount: number
+  category: string
+  date: string
+}
+
 export default function ExpensesPage() {
-  const [transactions, setTransactions] = useState(initialTransactions)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('Food')
   const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(true)
 
-  function handleAdd() {
+  useEffect(() => {
+    fetchTransactions()
+  }, [])
+
+  async function fetchTransactions() {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) setTransactions(data)
+    setLoading(false)
+  }
+
+  async function handleAdd() {
     if (!name || !amount) return
-    const newTx = {
-      id: Date.now(),
-      name,
-      amount: parseFloat(amount),
-      category,
-      date: 'Today',
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: user.id,
+        name,
+        amount: parseFloat(amount),
+        category,
+        type: 'expense',
+        date: new Date().toISOString().split('T')[0],
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setTransactions([data, ...transactions])
+      setName('')
+      setAmount('')
+      setCategory('Food')
+      setShowForm(false)
     }
-    setTransactions([newTx, ...transactions])
-    setName('')
-    setAmount('')
-    setCategory('Food')
-    setShowForm(false)
   }
 
   return (
@@ -76,22 +105,17 @@ export default function ExpensesPage() {
             style={{ width: '100%', padding: '0.75rem', borderRadius: '0.6rem', border: '1px solid #f0ebe1', marginBottom: '0.75rem', fontSize: '0.875rem', backgroundColor: '#faf7f2', color: '#1a1a1a', boxSizing: 'border-box' }}
           />
 
-          {/* Category Selector */}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 style={{
-                  padding: '0.4rem 0.8rem',
-                  borderRadius: '999px',
-                  border: '1px solid',
+                  padding: '0.4rem 0.8rem', borderRadius: '999px', border: '1px solid',
                   borderColor: category === cat ? '#007b6e' : '#f0ebe1',
                   backgroundColor: category === cat ? '#e6f4f2' : '#ffffff',
                   color: category === cat ? '#007b6e' : '#6b7280',
-                  fontSize: '0.75rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
+                  fontSize: '0.75rem', fontWeight: '500', cursor: 'pointer',
                 }}>
                 {getCategoryEmoji(cat)} {cat}
               </button>
@@ -109,6 +133,15 @@ export default function ExpensesPage() {
       {/* Transactions List */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', padding: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 style={{ fontWeight: '600', color: '#1a1a1a', marginBottom: '1rem' }}>All Transactions</h3>
+
+        {loading && (
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
+        )}
+
+        {!loading && transactions.length === 0 && (
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No expenses yet. Add your first one!</p>
+        )}
+
         {transactions.map((tx, i) => (
           <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.9rem', marginBottom: '0.9rem', borderBottom: i < transactions.length - 1 ? '1px solid #f0ebe1' : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

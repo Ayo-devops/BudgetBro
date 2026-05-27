@@ -11,8 +11,12 @@ const navItems = [
   { label: 'Analytics', path: '/analytics', icon: '↑' },
 ]
 
+const hideNavOn = ['/login', '/signup']
+
 export default function BottomNav() {
   const pathname = usePathname()
+
+  if (hideNavOn.includes(pathname)) return null
 
   return (
     <div style={{
