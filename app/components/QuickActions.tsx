@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 
 const actions = [
-  { label: 'Add', icon: '+', path: '/expenses' },
+  { label: 'Add Expense', icon: '+', path: '/expenses' },
   { label: 'Budget', icon: '₦', path: '/budget' },
   { label: 'Debts', icon: '↔', path: '/debts' },
   { label: 'Stats', icon: '↑', path: '/analytics' },
