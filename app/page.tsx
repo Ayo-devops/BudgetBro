@@ -67,23 +67,25 @@ export default function Home() {
     <AuthGuard>
       <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div>
-            <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{getGreeting()} 👋</p>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a' }}>{firstName}</h1>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              onClick={() => setShowSignOutModal(true)}
-              style={{ fontSize: '0.75rem', color: '#6b7280', background: 'none', border: '1px solid #f0ebe1', borderRadius: '999px', padding: '0.35rem 0.8rem', cursor: 'pointer', fontWeight: '500' }}>
-              Sign out
-            </button>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#007b6e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>
-              {firstName[0].toUpperCase()}
-            </div>
-          </div>
-        </div>
+     {/* Header */}
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+  <div>
+    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{getGreeting()} 👋</p>
+    <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a' }}>{firstName}</h1>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+    <button
+      onClick={() => setShowSignOutModal(true)}
+      style={{ fontSize: '0.75rem', color: '#6b7280', background: 'none', border: '1px solid #f0ebe1', borderRadius: '999px', padding: '0.35rem 0.8rem', cursor: 'pointer', fontWeight: '500' }}>
+      Sign out
+    </button>
+    <a href="/profile" style={{ textDecoration: 'none' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#007b6e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', cursor: 'pointer' }}>
+        {firstName[0].toUpperCase()}
+      </div>
+    </a>
+  </div>
+</div>
 
         <BalanceCard totalExpenses={totalExpenses} />
         <QuickActions />

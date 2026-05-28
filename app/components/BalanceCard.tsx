@@ -1,10 +1,33 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
 type Props = {
   totalExpenses: number
 }
 
 export default function BalanceCard({ totalExpenses }: Props) {
-  const income = 60000
-  const balance = income - totalExpenses
+  const [monthlyIncome, setMonthlyIncome] = useState(0)
+
+  useEffect(() => {
+    fetchIncome()
+  }, [])
+
+  async function fetchIncome() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('monthly_income')
+      .eq('id', user.id)
+      .single()
+
+    if (data) setMonthlyIncome(data.monthly_income || 0)
+  }
+
+  const balance = monthlyIncome - totalExpenses
 
   return (
     <div style={{ backgroundColor: '#007b6e', borderRadius: '1rem', padding: '1.5rem', marginBottom: '1.5rem', color: 'white' }}>
@@ -13,7 +36,7 @@ export default function BalanceCard({ totalExpenses }: Props) {
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>Income</p>
-          <p style={{ fontWeight: '600' }}>₦{income.toLocaleString()}</p>
+          <p style={{ fontWeight: '600' }}>₦{monthlyIncome.toLocaleString()}</p>
         </div>
         <div>
           <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>Expenses</p>
