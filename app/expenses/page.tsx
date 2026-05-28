@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import AuthGuard from '../components/AuthGuard'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
 
@@ -90,7 +91,9 @@ async function handleAdd() {
     setShowForm(false)
   }
 }
-  return (
+ return (
+  <AuthGuard>
+    <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}></div>
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
       {/* Header */}
@@ -177,6 +180,6 @@ async function handleAdd() {
         ))}
       </div>
 
-    </div>
+    </div></AuthGuard>
   )
 }

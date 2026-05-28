@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-
+import AuthGuard from '../components/AuthGuard'
 type Debt = {
   id: string
   contact_name: string
@@ -80,6 +80,7 @@ export default function DebtsPage() {
   const totalIOwe = iOwe.reduce((sum, d) => sum + d.amount, 0)
 
   return (
+    <AuthGuard>
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
       {/* Header */}
@@ -222,6 +223,6 @@ export default function DebtsPage() {
         <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No pending debts. You're all clear! 🎉</p>
       )}
 
-    </div>
+    </div> </AuthGuard>
   )
 }

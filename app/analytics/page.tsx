@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import AuthGuard from '../components/AuthGuard'
 
 const weeklyData = [
   { day: 'Mon', amount: 3200 },
@@ -27,6 +28,7 @@ const dailyAverage = Math.round(weeklyData.reduce((sum, d) => sum + d.amount, 0)
 
 export default function AnalyticsPage() {
   return (
+    <AuthGuard>
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
       {/* Header */}
@@ -95,6 +97,6 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-    </div>
+    </div></AuthGuard>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import AuthGuard from '../components/AuthGuard'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
 
@@ -98,6 +99,7 @@ export default function BudgetPage() {
   const totalPercent = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
 
   return (
+    <AuthGuard>
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
       {/* Header */}
@@ -198,6 +200,6 @@ export default function BudgetPage() {
         })}
       </div>
 
-    </div>
+    </div></AuthGuard>
   )
 }
