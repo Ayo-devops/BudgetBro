@@ -25,6 +25,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showSignOutModal, setShowSignOutModal] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -72,8 +73,15 @@ export default function Home() {
             <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{getGreeting()} 👋</p>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a' }}>{firstName}</h1>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#007b6e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>
-            {firstName[0].toUpperCase()}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              onClick={() => setShowSignOutModal(true)}
+              style={{ fontSize: '0.75rem', color: '#6b7280', background: 'none', border: '1px solid #f0ebe1', borderRadius: '999px', padding: '0.35rem 0.8rem', cursor: 'pointer', fontWeight: '500' }}>
+              Sign out
+            </button>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#007b6e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>
+              {firstName[0].toUpperCase()}
+            </div>
           </div>
         </div>
 
@@ -114,6 +122,29 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* Sign Out Modal */}
+      {showSignOutModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', padding: '1.5rem', width: '100%', maxWidth: '400px' }}>
+            <h3 style={{ fontWeight: '700', color: '#1a1a1a', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Sign out?</h3>
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Are you sure you want to sign out?</p>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut()
+                window.location.href = '/login'
+              }}
+              style={{ width: '100%', backgroundColor: '#e63946', color: 'white', border: 'none', borderRadius: '0.75rem', padding: '0.85rem', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
+              Yes, sign out
+            </button>
+            <button
+              onClick={() => setShowSignOutModal(false)}
+              style={{ width: '100%', backgroundColor: '#f0ebe1', color: '#1a1a1a', border: 'none', borderRadius: '0.75rem', padding: '0.85rem', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   )
 }
