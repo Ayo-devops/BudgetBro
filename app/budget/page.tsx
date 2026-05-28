@@ -1,17 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
-
-const initialBudgets = [
-  { category: 'Food', limit: 15000, spent: 8500 },
-  { category: 'Transport', limit: 8000, spent: 6200 },
-  { category: 'Data', limit: 3000, spent: 1500 },
-  { category: 'School', limit: 10000, spent: 2000 },
-  { category: 'Clothing', limit: 5000, spent: 0 },
-  { category: 'Miscellaneous', limit: 4000, spent: 1200 },
-]
 
 function getCategoryEmoji(category: string) {
   const map: Record<string, string> = {
@@ -27,26 +19,83 @@ function getProgressColor(percent: number) {
   return '#007b6e'
 }
 
+type Budget = {
+  id: string
+  category: string
+  monthly_limit: number
+  spent: number
+}
+
 export default function BudgetPage() {
-  const [budgets, setBudgets] = useState(initialBudgets)
+  const [budgets, setBudgets] = useState<Budget[]>([])
   const [showForm, setShowForm] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('Food')
   const [limitAmount, setLimitAmount] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const totalLimit = budgets.reduce((sum, b) => sum + b.limit, 0)
-  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
-  const totalPercent = Math.round((totalSpent / totalLimit) * 100)
+  const currentMonth = new Date().getMonth() + 1
+  const currentYear = new Date().getFullYear()
 
-  function handleSave() {
+  useEffect(() => {
+    fetchBudgets()
+  }, [])
+
+  async function fetchBudgets() {
+    const { data, error } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('month', currentMonth)
+      .eq('year', currentYear)
+
+    if (!error && data) setBudgets(data)
+    setLoading(false)
+  }
+
+  async function handleSave() {
     if (!limitAmount) return
-    setBudgets(budgets.map((b) =>
-      b.category === selectedCategory
-        ? { ...b, limit: parseFloat(limitAmount) }
-        : b
-    ))
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const existing = budgets.find((b) => b.category === selectedCategory)
+
+    if (existing) {
+      const { data, error } = await supabase
+        .from('budgets')
+        .update({ monthly_limit: parseFloat(limitAmount) })
+        .eq('id', existing.id)
+        .select()
+        .single()
+
+      if (!error && data) {
+        setBudgets(budgets.map((b) => b.id === existing.id ? data : b))
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('budgets')
+        .insert({
+          user_id: user.id,
+          category: selectedCategory,
+          monthly_limit: parseFloat(limitAmount),
+          spent: 0,
+          month: currentMonth,
+          year: currentYear,
+        })
+        .select()
+        .single()
+
+      if (!error && data) {
+        setBudgets([...budgets, data])
+      }
+    }
+
     setLimitAmount('')
     setShowForm(false)
   }
+
+  const totalLimit = budgets.reduce((sum, b) => sum + b.monthly_limit, 0)
+  const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
+  const totalPercent = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
@@ -64,14 +113,16 @@ export default function BudgetPage() {
       {/* Overall Budget Card */}
       <div style={{ backgroundColor: '#007b6e', borderRadius: '1rem', padding: '1.5rem', marginBottom: '1.5rem', color: 'white' }}>
         <p style={{ fontSize: '0.875rem', opacity: 0.8, marginBottom: '0.3rem' }}>Monthly Budget</p>
-        <h2 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.3rem' }}>₦{totalSpent.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.7 }}>/ ₦{totalLimit.toLocaleString()}</span></h2>
+        <h2 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.3rem' }}>
+          ₦{totalSpent.toLocaleString()} <span style={{ fontSize: '1rem', opacity: 0.7 }}>/ ₦{totalLimit.toLocaleString()}</span>
+        </h2>
         <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: '0.75rem' }}>{totalPercent}% of budget used</p>
         <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '999px', height: '8px' }}>
           <div style={{ backgroundColor: 'white', borderRadius: '999px', height: '8px', width: `${Math.min(totalPercent, 100)}%`, transition: 'width 0.3s ease' }} />
         </div>
       </div>
 
-      {/* Edit Budget Form */}
+      {/* Edit Form */}
       {showForm && (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', padding: '1.2rem', marginBottom: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <h3 style={{ fontWeight: '600', marginBottom: '1rem', color: '#1a1a1a' }}>Set Budget Limit</h3>
@@ -82,15 +133,11 @@ export default function BudgetPage() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 style={{
-                  padding: '0.4rem 0.8rem',
-                  borderRadius: '999px',
-                  border: '1px solid',
+                  padding: '0.4rem 0.8rem', borderRadius: '999px', border: '1px solid',
                   borderColor: selectedCategory === cat ? '#007b6e' : '#f0ebe1',
                   backgroundColor: selectedCategory === cat ? '#e6f4f2' : '#ffffff',
                   color: selectedCategory === cat ? '#007b6e' : '#6b7280',
-                  fontSize: '0.75rem',
-                  fontWeight: '500',
-                  cursor: 'pointer',
+                  fontSize: '0.75rem', fontWeight: '500', cursor: 'pointer',
                 }}>
                 {getCategoryEmoji(cat)} {cat}
               </button>
@@ -116,11 +163,20 @@ export default function BudgetPage() {
       {/* Category Budgets */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', padding: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 style={{ fontWeight: '600', color: '#1a1a1a', marginBottom: '1rem' }}>By Category</h3>
+
+        {loading && (
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
+        )}
+
+        {!loading && budgets.length === 0 && (
+          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No budgets set yet. Hit Edit to add one!</p>
+        )}
+
         {budgets.map((b, i) => {
-          const percent = Math.round((b.spent / b.limit) * 100)
+          const percent = b.monthly_limit > 0 ? Math.round((b.spent / b.monthly_limit) * 100) : 0
           const color = getProgressColor(percent)
           return (
-            <div key={b.category} style={{ marginBottom: i < budgets.length - 1 ? '1.2rem' : 0 }}>
+            <div key={b.id} style={{ marginBottom: i < budgets.length - 1 ? '1.2rem' : 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span>{getCategoryEmoji(b.category)}</span>
@@ -128,7 +184,7 @@ export default function BudgetPage() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '0.875rem', fontWeight: '600', color }}>{percent}%</span>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '0.4rem' }}>₦{b.spent.toLocaleString()} / ₦{b.limit.toLocaleString()}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '0.4rem' }}>₦{b.spent.toLocaleString()} / ₦{b.monthly_limit.toLocaleString()}</span>
                 </div>
               </div>
               <div style={{ backgroundColor: '#f0ebe1', borderRadius: '999px', height: '6px' }}>

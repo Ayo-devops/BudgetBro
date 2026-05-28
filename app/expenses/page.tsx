@@ -42,35 +42,54 @@ export default function ExpensesPage() {
     if (!error && data) setTransactions(data)
     setLoading(false)
   }
+async function handleAdd() {
+  if (!name || !amount) return
 
-  async function handleAdd() {
-    if (!name || !amount) return
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+  const currentMonth = new Date().getMonth() + 1
+  const currentYear = new Date().getFullYear()
+  const expenseAmount = parseFloat(amount)
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert({
-        user_id: user.id,
-        name,
-        amount: parseFloat(amount),
-        category,
-        type: 'expense',
-        date: new Date().toISOString().split('T')[0],
-      })
-      .select()
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: user.id,
+      name,
+      amount: expenseAmount,
+      category,
+      type: 'expense',
+      date: new Date().toISOString().split('T')[0],
+    })
+    .select()
+    .single()
+
+  if (!error && data) {
+    setTransactions([data, ...transactions])
+
+    const { data: budgetData } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('category', category)
+      .eq('month', currentMonth)
+      .eq('year', currentYear)
       .single()
 
-    if (!error && data) {
-      setTransactions([data, ...transactions])
-      setName('')
-      setAmount('')
-      setCategory('Food')
-      setShowForm(false)
+    if (budgetData) {
+      await supabase
+        .from('budgets')
+        .update({ spent: budgetData.spent + expenseAmount })
+        .eq('id', budgetData.id)
     }
-  }
 
+    setName('')
+    setAmount('')
+    setCategory('Food')
+    setShowForm(false)
+  }
+}
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#faf7f2', padding: '1.5rem' }}>
 
