@@ -29,6 +29,7 @@ export default function ExpensesPage() {
   const [category, setCategory] = useState('Food')
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, amount: number, category: string } | null>(null)
 
   useEffect(() => {
     fetchTransactions()
@@ -90,6 +91,50 @@ export default function ExpensesPage() {
       setAmount('')
       setCategory('Food')
       setShowForm(false)
+    }
+  }
+
+  function confirmDelete(id: string, amount: number, category: string) {
+    setDeleteTarget({ id, amount, category })
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+   
+
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', deleteTarget.id)
+
+    if (!error) {
+  setDeleteTarget(null)
+  setTransactions(transactions.filter((t) => t.id !== deleteTarget.id))
+  // ... rest of budget update code
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const currentMonth = new Date().getMonth() + 1
+      const currentYear = new Date().getFullYear()
+
+      const { data: budgetData } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('category', deleteTarget.category)
+        .eq('month', currentMonth)
+        .eq('year', currentYear)
+        .single()
+
+      if (budgetData) {
+        await supabase
+          .from('budgets')
+          .update({ spent: Math.max(0, budgetData.spent - deleteTarget.amount) })
+          .eq('id', budgetData.id)
+      }
+
+      setDeleteTarget(null)
     }
   }
 
@@ -176,12 +221,39 @@ export default function ExpensesPage() {
                   <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{tx.category} · {tx.date}</p>
                 </div>
               </div>
-              <p style={{ fontWeight: '600', color: '#e63946' }}>-₦{tx.amount.toLocaleString()}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <p style={{ fontWeight: '600', color: '#e63946' }}>-₦{tx.amount.toLocaleString()}</p>
+                <button
+                  onClick={() => confirmDelete(tx.id, tx.amount, tx.category)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '1rem', padding: '0.2rem', lineHeight: 1 }}>
+                  ✕
+                </button>
+              </div>
             </div>
           ))}
         </div>
 
       </div>
+
+      {/* Delete Modal */}
+      {deleteTarget && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '1.5rem', padding: '1.5rem', width: '100%', maxWidth: '400px' }}>
+            <h3 style={{ fontWeight: '700', color: '#1a1a1a', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Delete expense?</h3>
+            <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' }}>This will permanently remove this transaction and update your budget.</p>
+            <button
+              onClick={handleDelete}
+              style={{ width: '100%', backgroundColor: '#e63946', color: 'white', border: 'none', borderRadius: '0.75rem', padding: '0.85rem', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer', marginBottom: '0.75rem' }}>
+              Yes, delete
+            </button>
+            <button
+              onClick={() => setDeleteTarget(null)}
+              style={{ width: '100%', backgroundColor: '#f0ebe1', color: '#1a1a1a', border: 'none', borderRadius: '0.75rem', padding: '0.85rem', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   )
 }
