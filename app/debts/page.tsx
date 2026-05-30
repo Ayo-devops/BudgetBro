@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import AuthGuard from '../components/AuthGuard'
+import { SkeletonTransaction } from '../components/Skeleton'
 type Debt = {
   id: string
   contact_name: string
@@ -161,8 +162,12 @@ export default function DebtsPage() {
 
       {/* They Owe Me */}
       {loading && (
-        <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
-      )}
+  <>
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+  </>
+)}
 
       {!loading && owedToMe.length > 0 && (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', padding: '1.2rem', marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>

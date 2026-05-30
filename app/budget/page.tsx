@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import AuthGuard from '../components/AuthGuard'
+import { SkeletonCard } from '../components/Skeleton'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
 
@@ -166,9 +167,13 @@ export default function BudgetPage() {
       <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', padding: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
         <h3 style={{ fontWeight: '600', color: '#1a1a1a', marginBottom: '1rem' }}>By Category</h3>
 
-        {loading && (
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
-        )}
+       {loading && (
+  <>
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+  </>
+)}
 
         {!loading && budgets.length === 0 && (
           <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No budgets set yet. Hit Edit to add one!</p>

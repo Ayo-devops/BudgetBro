@@ -5,6 +5,7 @@ import { supabase } from './lib/supabase'
 import BalanceCard from './components/BalanceCard'
 import QuickActions from './components/QuickActions'
 import AuthGuard from './components/AuthGuard'
+import { SkeletonBalanceCard, SkeletonTransaction } from './components/Skeleton'
 
 type Transaction = {
   id: string
@@ -98,8 +99,12 @@ export default function Home() {
           </div>
 
           {loading && (
-            <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
-          )}
+  <>
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+  </>
+)}
 
           {!loading && transactions.length === 0 && (
             <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No transactions yet. Add your first expense!</p>

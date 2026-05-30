@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import AuthGuard from '../components/AuthGuard'
+import { SkeletonTransaction } from '../components/Skeleton'
 
 const categories = ['Food', 'Transport', 'Data', 'School', 'Clothing', 'Miscellaneous']
 
@@ -203,8 +204,12 @@ export default function ExpensesPage() {
           <h3 style={{ fontWeight: '600', color: '#1a1a1a', marginBottom: '1rem' }}>All Transactions</h3>
 
           {loading && (
-            <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>Loading...</p>
-          )}
+  <>
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+    <SkeletonTransaction />
+  </>
+)}
 
           {!loading && transactions.length === 0 && (
             <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '1rem' }}>No expenses yet. Add your first one!</p>

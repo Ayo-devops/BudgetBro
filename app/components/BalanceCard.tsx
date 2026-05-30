@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { SkeletonBalanceCard } from './Skeleton'
 
 type Props = {
   totalExpenses: number
@@ -9,6 +10,7 @@ type Props = {
 
 export default function BalanceCard({ totalExpenses }: Props) {
   const [monthlyIncome, setMonthlyIncome] = useState(0)
+  const [incomeLoading, setIncomeLoading] = useState(true)
 
   useEffect(() => {
     fetchIncome()
@@ -25,7 +27,10 @@ export default function BalanceCard({ totalExpenses }: Props) {
       .single()
 
     if (data) setMonthlyIncome(data.monthly_income || 0)
+    setIncomeLoading(false)
   }
+
+  if (incomeLoading) return <SkeletonBalanceCard />
 
   const balance = monthlyIncome - totalExpenses
 

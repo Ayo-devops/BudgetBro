@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import AuthGuard from '../components/AuthGuard'
+import { SkeletonCard } from '../components/Skeleton'
 
 const CATEGORY_COLORS: Record<string, string> = {
   Food: '#007b6e',
@@ -76,9 +77,16 @@ export default function AnalyticsPage() {
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '1.5rem' }}>Analytics</h1>
 
         {loading && (
-          <p style={{ color: '#6b7280', fontSize: '0.875rem', textAlign: 'center', padding: '2rem' }}>Loading...</p>
-        )}
-
+  <>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+      <SkeletonCard />
+      <SkeletonCard />
+      <SkeletonCard />
+    </div>
+    <SkeletonCard />
+    <SkeletonCard />
+  </>
+)}
         {!loading && (
           <>
             {/* Stats Row */}
